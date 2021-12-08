@@ -86,7 +86,7 @@ class AuthController extends Controller
 
 
         if (! $token = auth()->attempt($validator->validated())) {
-            return response()->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+            return response()->json(['error' => 'Дані введено не вірно!'], Response::HTTP_UNAUTHORIZED);
         }
 
         return $this->createNewToken($token);
@@ -181,7 +181,7 @@ class AuthController extends Controller
         ));
 
         return response()->json([
-            'message' => 'User successfully registered',
+            'message' => 'Користувач успішно зареєструвався',
             'user' => $user
         ], Response::HTTP_CREATED);
     }
@@ -203,7 +203,7 @@ class AuthController extends Controller
     public function logout() {
         auth()->logout();
 
-        return response()->json(['message' => 'User successfully signed out'], Response::HTTP_OK);
+        return response()->json(['message' => 'Користувач успішно вийшов'], Response::HTTP_OK);
     }
 
 
