@@ -239,7 +239,7 @@ class AuthController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function userProfile() {
-        return response()->json(auth()->user(), Response::HTTP_OK);
+        return response()->json(['user' => auth()->user()], Response::HTTP_OK);
     }
 
     /**

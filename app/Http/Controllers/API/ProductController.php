@@ -14,7 +14,16 @@ class ProductController extends Controller
      * @OA\Get(
      *     tags={"Product"},
      *     path="/api/products",
-     *     @OA\Response(response="200", description="List Products.")
+     *     @OA\Response(response="200", description="List Products."),
+     *
+     *   @OA\Parameter(
+     *      name="page",
+     *      in="query",
+     *      required=true,
+     *      @OA\Schema(
+     *           type="string"
+     *      )
+     * ),
      * )
      */
     /**
@@ -22,14 +31,12 @@ class ProductController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::all();
-        return response()->json([
-            "success" => true,
-            "message" => "Product List",
-            "data" => $products
-        ]);
+        $products = Product::paginate(6);
+        return response()->json(
+            $products
+        );
     }
 
     /**
@@ -49,6 +56,14 @@ class ProductController extends Controller
      *      name="detail",
      *      in="query",
      *      required=true,
+     *      @OA\Schema(
+     *          type="string"
+     *      )
+     *   ),
+     *   @OA\Parameter(
+     *      name="image",
+     *      in="query",
+     *      required=false,
      *      @OA\Schema(
      *          type="string"
      *      )
@@ -85,7 +100,7 @@ class ProductController extends Controller
         $input = $request->all();
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'detail' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
@@ -158,6 +173,14 @@ class ProductController extends Controller
      *          type="string"
      *      )
      *   ),
+     *   @OA\Parameter(
+     *      name="image",
+     *      in="query",
+     *      required=false,
+     *      @OA\Schema(
+     *          type="string"
+     *      )
+     *   ),
      *   @OA\Response(
      *      response=200,
      *       description="Success",
@@ -195,7 +218,7 @@ class ProductController extends Controller
         $input = $request->all();
         $validator = Validator::make($input, [
             'name' => 'required',
-            'detail' => 'required'
+            'detail' => 'required',
         ]);
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
