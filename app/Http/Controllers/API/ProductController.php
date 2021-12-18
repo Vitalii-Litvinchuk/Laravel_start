@@ -14,16 +14,22 @@ class ProductController extends Controller
      * @OA\Get(
      *     tags={"Product"},
      *     path="/api/products",
-     *     @OA\Response(response="200", description="List Products."),
-     *
-     *   @OA\Parameter(
+     *     @OA\Parameter(
      *      name="page",
      *      in="query",
-     *      required=true,
      *      @OA\Schema(
      *           type="string"
      *      )
-     * ),
+     *   ),
+     *     @OA\Parameter(
+     *      name="name",
+     *      in="query",
+     *      required=false,
+     *      @OA\Schema(
+     *           type="string"
+     *      )
+     *   ),
+     *     @OA\Response(response="200", description="List Products.")
      * )
      */
     /**
@@ -33,10 +39,15 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $input = $request->all();
+        $name=isset($input["name"])? $input["name"] : "";
+        if(!empty($name))
+        {
+            $products = Product::where("name", 'LIKE', "%$name%")->paginate(6);
+            return response()->json($products);
+        }
         $products = Product::paginate(6);
-        return response()->json(
-            $products
-        );
+        return response()->json($products);
     }
 
     /**
@@ -60,14 +71,20 @@ class ProductController extends Controller
      *          type="string"
      *      )
      *   ),
-     *   @OA\Parameter(
-     *      name="image",
-     *      in="query",
-     *      required=false,
-     *      @OA\Schema(
-     *          type="string"
-     *      )
-     *   ),
+     *  @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     description="image to upload",
+     *                     property="file",
+     *                     type="file",
+     *                ),
+     *                 required={"file"}
+     *             )
+     *         )
+     *     ),
      *   @OA\Response(
      *      response=200,
      *       description="Success",
@@ -105,11 +122,16 @@ class ProductController extends Controller
         if ($validator->fails()) {
             return $this->sendError('Validation Error.', $validator->errors());
         }
+        $imageName = uniqid().'.'.$request->file->extension();
+        $path = public_path('images');
+        $request->file->move($path, $imageName);
+
+        $input['image']=$imageName;
         $product = Product::create($input);
         return response()->json([
             "success" => true,
             "message" => "Product created successfully.",
-            "data" => $product
+            "product" => $product
         ]);
     }
 
