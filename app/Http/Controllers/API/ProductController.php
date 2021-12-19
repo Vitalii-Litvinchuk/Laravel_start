@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\API;
 
+use Illuminate\Support\Facades\File;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Validator;
+
 
 class ProductController extends Controller
 {
@@ -298,6 +300,10 @@ class ProductController extends Controller
         $product = Product::find($id);
         if (is_null($product)) {
             return $this->sendError('Product not found.');
+        }
+        $image_path = public_path("images/" . $product->image);
+        if (File::exists($image_path)) {
+            File::delete($image_path);
         }
         $product->delete();
         return response()->json([
