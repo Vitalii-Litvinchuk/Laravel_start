@@ -45,10 +45,10 @@ class ProductController extends Controller
         $name=isset($input["name"])? $input["name"] : "";
         if(!empty($name))
         {
-            $products = Product::where("name", 'LIKE', "%$name%")->paginate(6);
+            $products = Product::where("name", 'LIKE', "%$name%")->paginate(1);
             return response()->json($products);
         }
-        $products = Product::paginate(6);
+        $products = Product::paginate(1);
         return response()->json($products);
     }
 
@@ -171,7 +171,7 @@ class ProductController extends Controller
     }
 
     /**
-     * @OA\Put (
+     * @OA\Post   (
      ** path="/api/products/{id}",
      *   tags={"Product"},
      *
@@ -184,7 +184,7 @@ class ProductController extends Controller
      *   @OA\Parameter(
      *      name="name",
      *      in="query",
-     *      required=true,
+     *      required=false,
      *      @OA\Schema(
      *           type="string"
      *      )
@@ -192,19 +192,23 @@ class ProductController extends Controller
      *   @OA\Parameter(
      *      name="detail",
      *      in="query",
-     *      required=true,
-     *      @OA\Schema(
-     *          type="string"
-     *      )
-     *   ),
-     *   @OA\Parameter(
-     *      name="image",
-     *      in="query",
      *      required=false,
      *      @OA\Schema(
      *          type="string"
      *      )
      *   ),
+     *  @OA\RequestBody(
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     description="image to upload",
+     *                     property="file",
+     *                     type="file",
+     *                ),
+     *             )
+     *         )
+     *     ),
      *   @OA\Response(
      *      response=200,
      *       description="Success",
@@ -240,16 +244,27 @@ class ProductController extends Controller
             return $this->sendError('Product not found.');
         }
         $input = $request->all();
-        $validator = Validator::make($input, [
-            'name' => 'required',
-            'detail' => 'required',
-        ]);
-        if ($validator->fails()) {
-            return $this->sendError('Validation Error.', $validator->errors());
+        if (isset($input["name"])){
+            $product->name = $input['name'];
+            $product->save();
         }
-        $product->name = $input['name'];
-        $product->detail = $input['detail'];
-        $product->save();
+        if (isset($input["detail"])){
+            $product->detail = $input['detail'];
+            $product->save();
+        }
+        if ($request->file){
+            $image_path = public_path("images/" . $product->image);
+            if (File::exists($image_path)) {
+                File::delete($image_path);
+            }
+
+            $imageName = uniqid().'.'.$request->file->extension();
+            $path = public_path('images');
+            $request->file->move($path, $imageName);
+
+            $product->image = $imageName;
+            $product->save();
+        }
         return response()->json([
             "success" => true,
             "message" => "Product updated successfully.",
