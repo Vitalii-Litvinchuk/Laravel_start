@@ -45,10 +45,10 @@ class ProductController extends Controller
         $name=isset($input["name"])? $input["name"] : "";
         if(!empty($name))
         {
-            $products = Product::where("name", 'LIKE', "%$name%")->paginate(1);
+            $products = Product::where("name", 'LIKE', "%$name%")->paginate(6);
             return response()->json($products);
         }
-        $products = Product::paginate(1);
+        $products = Product::paginate(6);
         return response()->json($products);
     }
 
