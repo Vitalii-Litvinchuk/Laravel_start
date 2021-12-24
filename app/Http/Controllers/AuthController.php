@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Validator;
 use Symfony\Component\HttpFoundation\Response;
+use function GuzzleHttp\Promise\all;
 
 
 class AuthController extends Controller
@@ -133,6 +134,20 @@ class AuthController extends Controller
      *           type="string"
      *      )
      *   ),
+     *  @OA\RequestBody(
+     *         required=true,
+     *         @OA\MediaType(
+     *             mediaType="multipart/form-data",
+     *             @OA\Schema(
+     *                 @OA\Property(
+     *                     description="photo to upload",
+     *                     property="photo",
+     *                     type="file",
+     *                ),
+     *                 required={"photo"}
+     *             )
+     *         )
+     *     ),
      *   @OA\Response(
      *      response=201,
      *       description="Success",
@@ -165,7 +180,17 @@ class AuthController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
     public function register(Request $request) {
-        $validator = Validator::make($request->all(), [
+        $input = $request->all();
+
+        $imageName = uniqid().'.'.$request->photo->extension();
+        $path = public_path('photos');
+        $request->photo->move($path, $imageName);
+
+        $input['photo']=$imageName;
+
+
+
+        $validator = Validator::make($input, [
             'name' => 'required|string|between:2,100',
             'email' => 'required|string|email|max:100|unique:users',
             'password' => 'required|string|confirmed|min:6',
@@ -175,14 +200,14 @@ class AuthController extends Controller
             return response()->json($validator->errors(), Response::HTTP_BAD_REQUEST);
         }
 
-        $user = User::create(array_merge(
-            $validator->validated(),
-            ['password' => bcrypt($request->password)]
-        ));
+        $input['password'] = bcrypt($request->password);
+
+        $user = User::create($input);
 
         return response()->json([
             'message' => 'Користувач успішно зареєструвався',
-            'user' => $user
+            'user' => $user,
+            'photo' => $input['photo'],
         ], Response::HTTP_CREATED);
     }
 
